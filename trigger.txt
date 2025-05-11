@@ -1,0 +1,22 @@
+-- creación de tabla de auditoria -- 
+
+CREATE TABLE Auditoria_Pagos_Servicios (
+    Auditoria_ID INT PRIMARY KEY AUTO_INCREMENT,
+    Accion VARCHAR(10) NOT NULL, 
+    Pago_ID INT, 
+    Comprobante VARCHAR(50),
+    Edificio_ID INT, 
+    Nro_Medidor VARCHAR(50), 
+    Importe DECIMAL(15,4), 
+    Medida VARCHAR(10),
+    Consumo_Comprobante DECIMAL(15,4),
+    Fecha_Pago DATE, 
+    Servicio_ID INT, 
+    Nombre_Sede VARCHAR(50), 
+    Valor_Anterior TEXT, 
+    Valor_Nuevo TEXT, 
+    Usuario VARCHAR(100), 
+    Fecha_Hora DATETIME NOT NULL,
+    INDEX idx_fecha_hora (Fecha_Hora), 
+    INDEX idx_pago_id (Pago_ID) 
+);

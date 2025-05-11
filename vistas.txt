@@ -1,0 +1,12 @@
+-- para ver los totales de consumo e importe por edificio--
+
+CREATE VIEW Totales_Por_Edificio AS
+SELECT 
+    ps.Edificio_ID,
+    COALESCE(SUM(ps.Importe), 0) AS Total_Importe,
+    COALESCE(SUM(ps.Consumo_Comprobante), 0) AS Total_Consumo
+FROM Pagos_Servicios ps
+GROUP BY ps.Edificio_ID;
+
+-- para ver los totales de consumos e importe por sede -- 
+

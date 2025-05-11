@@ -1,0 +1,70 @@
+-- carga archivos a partir de fecha seteada --
+
+DELIMITER //
+
+CREATE PROCEDURE Cargar_Pagos_Desde_Fecha(
+    IN p_Ruta_Archivo VARCHAR(255),
+    IN p_Fecha_Inicio DATE
+)
+BEGIN
+    -- Crear tabla temporal
+    DROP TEMPORARY TABLE IF EXISTS Temp_Pagos;
+    CREATE TEMPORARY TABLE Temp_Pagos (
+        Comprobante VARCHAR(50),
+        Edificio_ID INT,
+        Nro_Medidor VARCHAR(50),
+        Medida VARCHAR(10),
+        Consumo_Comprobante DECIMAL(15,4),
+        Fecha_Pago VARCHAR(50),
+        Importe DECIMAL(15,4),
+        Servicio_ID INT,
+        Nombre_Sede VARCHAR(50),
+        Color VARCHAR(50)
+    );
+
+    -- Cargar datos del CSV a la tabla temporal
+    SET @sql = CONCAT(
+        'LOAD DATA INFILE ''', p_Ruta_Archivo, '''
+        INTO TABLE Temp_Pagos
+        FIELDS TERMINATED BY '';'' 
+        ENCLOSED BY ''"''
+        LINES TERMINATED BY ''\n''
+        IGNORE 1 ROWS
+        (Comprobante, Edificio_ID, Nro_Medidor, Medida, Consumo_Comprobante, Fecha_Pago, Importe, Servicio_ID, Nombre_Sede, Color)'
+    );
+    PREPARE stmt FROM @sql;
+    EXECUTE stmt;
+    DEALLOCATE PREPARE stmt;
+
+    -- Insertar datos en Pagos_Servicios, filtrando por fecha y manejando claves foráneas
+    INSERT INTO Pagos_Servicios (
+        Comprobante,
+        Edificio_ID,
+        Nro_Medidor,
+        Importe,
+        Medida,
+        Consumo_Comprobante,
+        Fecha_Pago,
+        Servicio_ID,
+        Nombre_Sede
+    )
+    SELECT 
+        t.Comprobante,
+        IF(t.Edificio_ID NOT IN (SELECT Edificio_ID FROM Edificios) OR t.Edificio_ID = '', NULL, t.Edificio_ID),
+        IF(t.Nro_Medidor NOT IN (SELECT Nro_Medidor FROM Medidores) OR t.Nro_Medidor = '', NULL, t.Nro_Medidor),
+        t.Importe,
+        t.Medida,
+        t.Consumo_Comprobante,
+        STR_TO_DATE(t.Fecha_Pago, '%d/%m/%y'),
+        IF(t.Servicio_ID NOT IN (SELECT Servicio_ID FROM Servicios) OR t.Servicio_ID = '', NULL, t.Servicio_ID),
+        t.Nombre_Sede
+    FROM Temp_Pagos t
+    WHERE STR_TO_DATE(t.Fecha_Pago, '%d/%m/%y') >= p_Fecha_Inicio
+      AND t.Comprobante IS NOT NULL
+      AND t.Importe IS NOT NULL;
+
+    -- Limpiar tabla temporal
+    DROP TEMPORARY TABLE Temp_Pagos;
+END //
+
+DELIMITER ;

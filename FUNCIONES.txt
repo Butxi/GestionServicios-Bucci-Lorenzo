@@ -1,0 +1,107 @@
+-- función para calcular la incidencia porcentual de cada edificio --
+
+DELIMITER //
+
+CREATE FUNCTION Porcentajes_Por_Edificio(p_Edificio_ID INT)
+RETURNS VARCHAR(100)
+DETERMINISTIC
+BEGIN
+    DECLARE v_Total_Importe_Edificio DECIMAL(20,4);
+    DECLARE v_Total_Consumo_Edificio DECIMAL(20,4);
+    DECLARE v_Total_Importe_General DECIMAL(20,4);
+    DECLARE v_Total_Consumo_General DECIMAL(20,4);
+    DECLARE v_Porcentaje_Importe DECIMAL(10,2);
+    DECLARE v_Porcentaje_Consumo DECIMAL(10,2);
+    DECLARE v_Resultado VARCHAR(100);
+
+    -- Obtener totales del edificio específico
+    SELECT 
+        COALESCE(SUM(Importe), 0),
+        COALESCE(SUM(Consumo_Comprobante), 0)
+    INTO 
+        v_Total_Importe_Edificio,
+        v_Total_Consumo_Edificio
+    FROM Pagos_Servicios
+    WHERE Edificio_ID = p_Edificio_ID OR (p_Edificio_ID IS NULL AND Edificio_ID IS NULL);
+
+    -- Obtener totales generales
+    SELECT 
+        COALESCE(SUM(Importe), 0),
+        COALESCE(SUM(Consumo_Comprobante), 0)
+    INTO 
+        v_Total_Importe_General,
+        v_Total_Consumo_General
+    FROM Pagos_Servicios;
+
+    -- Calcular porcentajes
+    SET v_Porcentaje_Importe = IF(v_Total_Importe_General > 0,
+                                  (v_Total_Importe_Edificio / v_Total_Importe_General) * 100,
+                                  0);
+    SET v_Porcentaje_Consumo = IF(v_Total_Consumo_General > 0,
+                                  (v_Total_Consumo_Edificio / v_Total_Consumo_General) * 100,
+                                  0);
+
+    -- Formatear resultado
+    SET v_Resultado = CONCAT(
+        'Importe: ', ROUND(v_Porcentaje_Importe, 2), '%, ',
+        'Consumo: ', ROUND(v_Porcentaje_Consumo, 2), '%'
+    );
+
+    RETURN v_Resultado;
+END //
+
+DELIMITER ;
+
+-- función para calcular la incidencia porcentual de cada edificio --
+
+DELIMITER //
+
+CREATE FUNCTION Porcentajes_Por_Sede(p_Nombre_Sede VARCHAR(50))
+RETURNS VARCHAR(100)
+DETERMINISTIC
+BEGIN
+    DECLARE v_Total_Importe_Sede DECIMAL(20,4);
+    DECLARE v_Total_Consumo_Sede DECIMAL(20,4);
+    DECLARE v_Total_Importe_General DECIMAL(20,4);
+    DECLARE v_Total_Consumo_General DECIMAL(20,4);
+    DECLARE v_Porcentaje_Importe DECIMAL(10,2);
+    DECLARE v_Porcentaje_Consumo DECIMAL(10,2);
+    DECLARE v_Resultado VARCHAR(100);
+
+    -- Obtener totales de la sede específica
+    SELECT 
+        COALESCE(SUM(Importe), 0),
+        COALESCE(SUM(Consumo_Comprobante), 0)
+    INTO 
+        v_Total_Importe_Sede,
+        v_Total_Consumo_Sede
+    FROM Pagos_Servicios
+    WHERE Nombre_Sede = p_Nombre_Sede OR (p_Nombre_Sede IS NULL AND Nombre_Sede IS NULL);
+
+    -- Obtener totales generales
+    SELECT 
+        COALESCE(SUM(Importe), 0),
+        COALESCE(SUM(Consumo_Comprobante), 0)
+    INTO 
+        v_Total_Importe_General,
+        v_Total_Consumo_General
+    FROM Pagos_Servicios;
+
+    -- Calcular porcentajes
+    SET v_Porcentaje_Importe = IF(v_Total_Importe_General > 0,
+                                  (v_Total_Importe_Sede / v_Total_Importe_General) * 100,
+                                  0);
+    SET v_Porcentaje_Consumo = IF(v_Total_Consumo_General > 0,
+                                  (v_Total_Consumo_Sede / v_Total_Consumo_General) * 100,
+                                  0);
+
+    -- Formatear resultado
+    SET v_Resultado = CONCAT(
+        'Importe: ', ROUND(v_Porcentaje_Importe, 2), '%, ',
+        'Consumo: ', ROUND(v_Porcentaje_Consumo, 2), '%'
+    );
+
+    RETURN v_Resultado;
+END //
+
+DELIMITER ;
